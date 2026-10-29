@@ -1,0 +1,6 @@
+{
+  "name": "Performans & Proje Görev Takip Sistemi",
+  "description": "Okul içi performans ve proje görevlerinin dağıtımı, dijital/kâğıt teslimi, ölçüt bazlı puanlama ve güvenli takibi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
