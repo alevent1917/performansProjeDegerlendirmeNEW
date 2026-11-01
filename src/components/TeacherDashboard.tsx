@@ -35,6 +35,7 @@ import {
   formatTurkishDate,
   sanitizeArchiveFileName,
 } from '../utils/validation';
+import { DEMO_UUIDS } from '../lib/taskService';
 
 export interface TeacherAssignmentItem {
   id: string;
@@ -76,6 +77,7 @@ export interface TeacherStudentSubmission {
   criteriaScores: Record<string, number>;
   pdfFileName?: string;
   fileSizeBytes?: number;
+  changeReason?: string;
 }
 
 export interface TeacherDashboardProps {
@@ -106,18 +108,18 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 }) => {
   // Öğretmenin Yetkili Olduğu Sınıf ve Dersler (teacher_permissions tablosundan)
   const authorizedClasses = [
-    { classroomId: 'c1', classroomName: '10/B', courseId: 'crs1', courseCode: 'PRG101', courseName: 'Programlama Temelleri' },
-    { classroomId: 'c1', classroomName: '10/B', courseId: 'crs2', courseCode: 'NET201', courseName: 'Ağ Sistemleri ve Anahtarlama' },
-    { classroomId: 'c2', classroomName: '11/B', courseId: 'crs2', courseCode: 'NET201', courseName: 'Ağ Sistemleri ve Anahtarlama' },
+    { classroomId: DEMO_UUIDS.CLASSROOM_10B, classroomName: '10/B', courseId: DEMO_UUIDS.COURSE_PRG101, courseCode: 'PRG101', courseName: 'Programlama Temelleri' },
+    { classroomId: DEMO_UUIDS.CLASSROOM_10B, classroomName: '10/B', courseId: DEMO_UUIDS.COURSE_NET201, courseCode: 'NET201', courseName: 'Ağ Sistemleri ve Anahtarlama' },
+    { classroomId: DEMO_UUIDS.CLASSROOM_11B, classroomName: '11/B', courseId: DEMO_UUIDS.COURSE_NET201, courseCode: 'NET201', courseName: 'Ağ Sistemleri ve Anahtarlama' },
   ];
 
   // Aktif Görevler (Props varsa props, yoksa yerel state)
   const [localAssignments, setLocalAssignments] = useState<TeacherAssignmentItem[]>([
     {
-      id: 'asg-1',
-      classroomId: 'c1',
+      id: DEMO_UUIDS.ASSIGNMENT_1,
+      classroomId: DEMO_UUIDS.CLASSROOM_10B,
       classroomName: '10/B',
-      courseId: 'crs1',
+      courseId: DEMO_UUIDS.COURSE_PRG101,
       courseCode: 'PRG101',
       courseName: 'Programlama Temelleri',
       title: 'Döngüler ve Fonksiyonlar Konsol Uygulaması',
@@ -130,17 +132,17 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       gradedCount: 12,
       paperPendingCount: 0,
       criteria: [
-        { id: 'crit-1', name: 'Algoritmik Doğruluk ve Mantıksal Akış', maxPoints: 30 },
-        { id: 'crit-2', name: 'Kodlama Standartları ve Yorum Satırları', maxPoints: 20 },
-        { id: 'crit-3', name: 'Hata Yakalama ve Uç Durum Kontrolleri', maxPoints: 25 },
-        { id: 'crit-4', name: 'Teknik Rapor Formatı ve Şablon Uyumu', maxPoints: 25 },
+        { id: 'e1000000-0000-4000-8000-000000000001', name: 'Algoritmik Doğruluk ve Mantıksal Akış', maxPoints: 30 },
+        { id: 'e1000000-0000-4000-8000-000000000002', name: 'Kodlama Standartları ve Yorum Satırları', maxPoints: 20 },
+        { id: 'e1000000-0000-4000-8000-000000000003', name: 'Hata Yakalama ve Uç Durum Kontrolleri', maxPoints: 25 },
+        { id: 'e1000000-0000-4000-8000-000000000004', name: 'Teknik Rapor Formatı ve Şablon Uyumu', maxPoints: 25 },
       ],
     },
     {
-      id: 'asg-2',
-      classroomId: 'c2',
+      id: DEMO_UUIDS.ASSIGNMENT_2,
+      classroomId: DEMO_UUIDS.CLASSROOM_11B,
       classroomName: '11/B',
-      courseId: 'crs2',
+      courseId: DEMO_UUIDS.COURSE_NET201,
       courseCode: 'NET201',
       courseName: 'Ağ Sistemleri ve Anahtarlama',
       title: 'Atölye UTP Cat6 Kablolama ve Patch Panel Pratiği',
@@ -153,9 +155,9 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       gradedCount: 8,
       paperPendingCount: 4,
       criteria: [
-        { id: 'crit-21', name: 'T568B Renk Sıralaması Doğruluğu', maxPoints: 40 },
-        { id: 'crit-22', name: 'Kablo Soyma ve RJ45 Sıkma Kalitesi', maxPoints: 30 },
-        { id: 'crit-23', name: 'Tester Doğrulaması', maxPoints: 30 },
+        { id: 'e2000000-0000-4000-8000-000000000021', name: 'T568B Renk Sıralaması Doğruluğu', maxPoints: 40 },
+        { id: 'e2000000-0000-4000-8000-000000000022', name: 'Kablo Soyma ve RJ45 Sıkma Kalitesi', maxPoints: 30 },
+        { id: 'e2000000-0000-4000-8000-000000000023', name: 'Tester Doğrulaması', maxPoints: 30 },
       ],
     },
   ]);
@@ -163,15 +165,15 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   const assignments = propAssignments && propAssignments.length > 0 ? propAssignments : localAssignments;
 
   // Seçili Görev ve Öğrenci Listesi
-  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string>('asg-1');
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string>(DEMO_UUIDS.ASSIGNMENT_1);
   const activeAssignment =
     assignments.find((a) => a.id === selectedAssignmentId) || assignments[0] || localAssignments[0];
 
   // Öğrenci Teslim Listesi
   const [localSubmissions, setLocalSubmissions] = useState<TeacherStudentSubmission[]>([
     {
-      id: 'sub-1',
-      studentId: 'st-1',
+      id: 'b1000000-0000-4000-8000-000000000001',
+      studentId: DEMO_UUIDS.STUDENT_1,
       studentName: 'Ali Demir',
       schoolNumber: '1042',
       status: 'submitted',
@@ -181,8 +183,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       criteriaScores: {},
     },
     {
-      id: 'sub-2',
-      studentId: 'st-2',
+      id: 'b1000000-0000-4000-8000-000000000002',
+      studentId: DEMO_UUIDS.STUDENT_2,
       studentName: 'Ayşe Yılmaz',
       schoolNumber: '1043',
       status: 'graded',
@@ -192,16 +194,16 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       evaluationStatus: 'finalized',
       evaluationComment: 'Harika kod organizasyonu ve kapsamlı hata yakalama.',
       criteriaScores: {
-        'crit-1': 30.0,
-        'crit-2': 19.0,
-        'crit-3': 24.0,
-        'crit-4': 22.0,
+        'e1000000-0000-4000-8000-000000000001': 30.0,
+        'e1000000-0000-4000-8000-000000000002': 19.0,
+        'e1000000-0000-4000-8000-000000000003': 24.0,
+        'e1000000-0000-4000-8000-000000000004': 22.0,
       },
       pdfFileName: '1043_Ayse_Yilmaz_v2.pdf',
     },
     {
-      id: 'sub-3',
-      studentId: 'st-3',
+      id: 'b1000000-0000-4000-8000-000000000003',
+      studentId: DEMO_UUIDS.STUDENT_3,
       studentName: 'Can Öztürk',
       schoolNumber: '1044',
       status: 'paper_reported',
@@ -210,8 +212,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       criteriaScores: {},
     },
     {
-      id: 'sub-4',
-      studentId: 'st-4',
+      id: 'b1000000-0000-4000-8000-000000000004',
+      studentId: DEMO_UUIDS.STUDENT_4,
       studentName: 'Zeynep Kaya',
       schoolNumber: '1045',
       status: 'not_submitted',

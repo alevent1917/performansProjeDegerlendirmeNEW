@@ -13,58 +13,44 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ------------------------------------------------------------------------------
 
 DO $$ BEGIN
-  CREATE TYPE user_role AS ENUM ('student', 'teacher', 'admin');
-EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+    CREATE TYPE user_role AS ENUM ('student', 'teacher', 'admin');
+  END IF;
 
-DO $$ BEGIN
-  CREATE TYPE user_status AS ENUM ('active', 'passive', 'pending_approval');
-EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_status') THEN
+    CREATE TYPE user_status AS ENUM ('active', 'passive', 'pending_approval');
+  END IF;
 
-DO $$ BEGIN
-  CREATE TYPE delivery_format AS ENUM ('digital_pdf', 'paper');
-EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'delivery_format') THEN
+    CREATE TYPE delivery_format AS ENUM ('digital_pdf', 'paper');
+  END IF;
 
-DO $$ BEGIN
-  CREATE TYPE student_task_status AS ENUM (
-    'not_submitted',
-    'submitted',
-    'late_submitted',
-    'paper_reported',
-    'paper_confirmed',
-    'graded'
-  );
-EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'student_task_status') THEN
+    CREATE TYPE student_task_status AS ENUM (
+      'not_submitted',
+      'submitted',
+      'late_submitted',
+      'paper_reported',
+      'paper_confirmed',
+      'graded'
+    );
+  END IF;
 
-DO $$ BEGIN
-  CREATE TYPE evaluation_status AS ENUM ('draft', 'finalized');
-EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'evaluation_status') THEN
+    CREATE TYPE evaluation_status AS ENUM ('draft', 'finalized');
+  END IF;
 
-DO $$ BEGIN
-  CREATE TYPE application_status AS ENUM ('pending', 'approved', 'rejected');
-EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'application_status') THEN
+    CREATE TYPE application_status AS ENUM ('pending', 'approved', 'rejected');
+  END IF;
 
-DO $$ BEGIN
-  CREATE TYPE extension_status AS ENUM ('none', 'pending', 'approved', 'rejected');
-EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'extension_status') THEN
+    CREATE TYPE extension_status AS ENUM ('none', 'pending', 'approved', 'rejected');
+  END IF;
 
-DO $$ BEGIN
-  CREATE TYPE notification_type AS ENUM ('info', 'warning', 'success', 'deadline', 'evaluation');
-EXCEPTION
-  WHEN duplicate_object THEN null;
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'notification_type') THEN
+    CREATE TYPE notification_type AS ENUM ('info', 'warning', 'success', 'deadline', 'evaluation');
+  END IF;
 END $$;
 
 -- ------------------------------------------------------------------------------
@@ -977,98 +963,89 @@ CREATE POLICY "Yedekleme kayıtlarını yalnızca yönetici görebilir ve yönet
 -- 9. SUPABASE STORAGE BUCKETLARI VE POLİTİKALARI (DOSYA DEPOLAMA GÜVENLİĞİ)
 -- ------------------------------------------------------------------------------
 
-DO $$ BEGIN
-  -- 9.1. task-submissions bucket (Özel / Private - 15 MB PDF sınırı)
-  INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-  VALUES (
-    'task-submissions',
-    'task-submissions',
-    false, -- Kesinlikle herkese açık değil (Private)
-    15728640, -- 15 MB
-    ARRAY['application/pdf']
-  )
-  ON CONFLICT (id) DO UPDATE SET
-    public = false,
-    file_size_limit = 15728640,
-    allowed_mime_types = ARRAY['application/pdf'];
+-- 9.1. task-submissions bucket (Özel / Private - 15 MB PDF sınırı)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'task-submissions',
+  'task-submissions',
+  false, -- Kesinlikle herkese açık değil (Private)
+  15728640, -- 15 MB
+  ARRAY['application/pdf']
+)
+ON CONFLICT (id) DO UPDATE SET
+  public = false,
+  file_size_limit = 15728640,
+  allowed_mime_types = ARRAY['application/pdf'];
 
-  -- 9.2. task-guidelines bucket (Öğretmen Kaynakları - 20 MB sınırı)
-  INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-  VALUES (
-    'task-guidelines',
-    'task-guidelines',
-    false,
-    20971520, -- 20 MB
-    ARRAY['application/pdf', 'application/zip', 'application/x-zip-compressed']
-  )
-  ON CONFLICT (id) DO UPDATE SET
-    file_size_limit = 20971520;
-EXCEPTION
-  WHEN undefined_table THEN null; -- Standart PostgreSQL test ortamında storage şeması yoksa atla
-END $$;
+-- 9.2. task-guidelines bucket (Öğretmen Kaynakları - 20 MB sınırı)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'task-guidelines',
+  'task-guidelines',
+  false,
+  20971520, -- 20 MB
+  ARRAY['application/pdf', 'application/zip', 'application/x-zip-compressed']
+)
+ON CONFLICT (id) DO UPDATE SET
+  file_size_limit = 20971520;
 
-DO $$ BEGIN
-  -- Öğrenci yalnızca kendi klasörüne (klasör adı = student_id) PDF yükleyebilir
-  DROP POLICY IF EXISTS "Öğrenci yalnızca kendi klasörüne PDF yükleyebilir" ON storage.objects;
-  CREATE POLICY "Öğrenci yalnızca kendi klasörüne PDF yükleyebilir"
-    ON storage.objects FOR INSERT
-    WITH CHECK (
-      bucket_id = 'task-submissions' AND
-      auth.uid() IS NOT NULL AND
-      (storage.foldername(name))[1] = auth.uid()::text
-    );
+-- Öğrenci yalnızca kendi klasörüne (klasör adı = student_id) PDF yükleyebilir
+DROP POLICY IF EXISTS "Öğrenci yalnızca kendi klasörüne PDF yükleyebilir" ON storage.objects;
+CREATE POLICY "Öğrenci yalnızca kendi klasörüne PDF yükleyebilir"
+  ON storage.objects FOR INSERT
+  WITH CHECK (
+    bucket_id = 'task-submissions' AND
+    auth.uid() IS NOT NULL AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  );
 
-  -- Öğrenci yalnızca kendi klasöründeki PDF dosyalarını okuyabilir
-  DROP POLICY IF EXISTS "Öğrenci yalnızca kendi teslimlerini okuyabilir" ON storage.objects;
-  CREATE POLICY "Öğrenci yalnızca kendi teslimlerini okuyabilir"
-    ON storage.objects FOR SELECT
-    USING (
-      bucket_id = 'task-submissions' AND
-      auth.uid() IS NOT NULL AND
-      (storage.foldername(name))[1] = auth.uid()::text
-    );
+-- Öğrenci yalnızca kendi klasöründeki PDF dosyalarını okuyabilir
+DROP POLICY IF EXISTS "Öğrenci yalnızca kendi teslimlerini okuyabilir" ON storage.objects;
+CREATE POLICY "Öğrenci yalnızca kendi teslimlerini okuyabilir"
+  ON storage.objects FOR SELECT
+  USING (
+    bucket_id = 'task-submissions' AND
+    auth.uid() IS NOT NULL AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  );
 
-  -- Öğretmen ve yönetici yetkili teslim dosyalarını okuyabilir (Yalnızca kendi görevlerine yapılan teslimler)
-  DROP POLICY IF EXISTS "Öğretmen ve yönetici teslim dosyalarını okuyabilir" ON storage.objects;
-  CREATE POLICY "Öğretmen ve yönetici teslim dosyalarını okuyabilir"
-    ON storage.objects FOR SELECT
-    USING (
-      bucket_id = 'task-submissions' AND (
-        public.is_admin() OR
-        (public.is_teacher() AND EXISTS (
-          SELECT 1 FROM public.student_task_assignments sta
-          JOIN public.task_assignments ta ON ta.id = sta.task_assignment_id
-          WHERE ta.teacher_id = auth.uid()
-          AND (storage.foldername(name))[1] = sta.student_id::text
-        ))
-      )
-    );
+-- Öğretmen ve yönetici yetkili teslim dosyalarını okuyabilir (Yalnızca kendi görevlerine yapılan teslimler)
+DROP POLICY IF EXISTS "Öğretmen ve yönetici teslim dosyalarını okuyabilir" ON storage.objects;
+CREATE POLICY "Öğretmen ve yönetici teslim dosyalarını okuyabilir"
+  ON storage.objects FOR SELECT
+  USING (
+    bucket_id = 'task-submissions' AND (
+      public.is_admin() OR
+      (public.is_teacher() AND EXISTS (
+        SELECT 1 FROM public.student_task_assignments sta
+        JOIN public.task_assignments ta ON ta.id = sta.task_assignment_id
+        WHERE ta.teacher_id = auth.uid()
+        AND (storage.foldername(name))[1] = sta.student_id::text
+      ))
+    )
+  );
 
-  -- Teslim PDF'leri akademik denetim gereği doğrudan silinemez ve güncellenemez
-  DROP POLICY IF EXISTS "Teslim dosyaları doğrudan silinemez" ON storage.objects;
-  CREATE POLICY "Teslim dosyaları doğrudan silinemez"
-    ON storage.objects FOR DELETE
-    USING (public.is_admin());
+-- Teslim PDF'leri akademik denetim gereği doğrudan silinemez ve güncellenemez
+DROP POLICY IF EXISTS "Teslim dosyaları doğrudan silinemez" ON storage.objects;
+CREATE POLICY "Teslim dosyaları doğrudan silinemez"
+  ON storage.objects FOR DELETE
+  USING (public.is_admin());
 
-  DROP POLICY IF EXISTS "Teslim dosyaları doğrudan güncellenemez" ON storage.objects;
-  CREATE POLICY "Teslim dosyaları doğrudan güncellenemez"
-    ON storage.objects FOR UPDATE
-    USING (public.is_admin());
+DROP POLICY IF EXISTS "Teslim dosyaları doğrudan güncellenemez" ON storage.objects;
+CREATE POLICY "Teslim dosyaları doğrudan güncellenemez"
+  ON storage.objects FOR UPDATE
+  USING (public.is_admin());
 
-  -- task-guidelines politikaları
-  DROP POLICY IF EXISTS "Kullanıcılar yönergeleri okuyabilir" ON storage.objects;
-  CREATE POLICY "Kullanıcılar yönergeleri okuyabilir"
-    ON storage.objects FOR SELECT
-    USING (bucket_id = 'task-guidelines' AND auth.uid() IS NOT NULL);
+-- task-guidelines politikaları
+DROP POLICY IF EXISTS "Kullanıcılar yönergeleri okuyabilir" ON storage.objects;
+CREATE POLICY "Kullanıcılar yönergeleri okuyabilir"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'task-guidelines' AND auth.uid() IS NOT NULL);
 
-  DROP POLICY IF EXISTS "Öğretmenler yönerge yükleyebilir" ON storage.objects;
-  CREATE POLICY "Öğretmenler yönerge yükleyebilir"
-    ON storage.objects FOR INSERT
-    WITH CHECK (
-      bucket_id = 'task-guidelines' AND
-      (public.is_teacher() OR public.is_admin())
-    );
-EXCEPTION
-  WHEN undefined_table THEN null;
-  WHEN duplicate_object THEN null;
-END $$;
+DROP POLICY IF EXISTS "Öğretmenler yönerge yükleyebilir" ON storage.objects;
+CREATE POLICY "Öğretmenler yönerge yükleyebilir"
+  ON storage.objects FOR INSERT
+  WITH CHECK (
+    bucket_id = 'task-guidelines' AND
+    (public.is_teacher() OR public.is_admin())
+  );

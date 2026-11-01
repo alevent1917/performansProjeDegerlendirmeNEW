@@ -13,13 +13,33 @@ const STORAGE_KEYS = {
   SUBMISSIONS: 'perf_tasks_submissions_v2',
 };
 
+/**
+ * Standart RFC 4122 Demo ve Test UUID Sabitleri:
+ * Canlı PostgreSQL UUID tipleri ve RLS politikaları ile %100 uyumludur.
+ */
+export const DEMO_UUIDS = {
+  TEACHER: '550e8400-e29b-41d4-a716-446655440000',
+  ADMIN: '660e8400-e29b-41d4-a716-446655440000',
+  STUDENT_1: '11111111-1111-4111-8111-111111111111', // Ali Demir - 1042
+  STUDENT_2: '22222222-2222-4222-8222-222222222222', // Ayşe Yılmaz - 1043
+  STUDENT_3: '33333333-3333-4333-8333-333333333333', // Can Öztürk - 1044
+  STUDENT_4: '44444444-4444-4444-8444-444444444444', // Zeynep Kaya - 1045
+  CLASSROOM_10B: 'c1000000-0000-4000-8000-000000000001',
+  CLASSROOM_11B: 'c2000000-0000-4000-8000-000000000002',
+  COURSE_PRG101: 'd1000000-0000-4000-8000-000000000001',
+  COURSE_NET201: 'd2000000-0000-4000-8000-000000000002',
+  ASSIGNMENT_1: 'a1000000-0000-4000-8000-000000000001',
+  ASSIGNMENT_2: 'a2000000-0000-4000-8000-000000000002',
+  ASSIGNMENT_3: 'a3000000-0000-4000-8000-000000000003',
+};
+
 // Başlangıç Tohum Verileri (İlk yükleme veya sıfırlama durumunda)
 export const INITIAL_SEED_ASSIGNMENTS: TeacherAssignmentItem[] = [
   {
-    id: 'asg-1',
-    classroomId: 'c1',
+    id: DEMO_UUIDS.ASSIGNMENT_1,
+    classroomId: DEMO_UUIDS.CLASSROOM_10B,
     classroomName: '10/B',
-    courseId: 'crs1',
+    courseId: DEMO_UUIDS.COURSE_PRG101,
     courseCode: 'PRG101',
     courseName: 'Programlama Temelleri',
     title: 'Döngüler, Diziler ve Fonksiyonlar Uygulaması',
@@ -33,17 +53,17 @@ export const INITIAL_SEED_ASSIGNMENTS: TeacherAssignmentItem[] = [
     gradedCount: 12,
     paperPendingCount: 0,
     criteria: [
-      { id: 'crit-1', name: 'Algoritmik Doğruluk ve Mantıksal Akış', maxPoints: 30 },
-      { id: 'crit-2', name: 'Kodlama Standartları ve Yorum Satırları', maxPoints: 20 },
-      { id: 'crit-3', name: 'Hata Yakalama ve Uç Durum Kontrolleri', maxPoints: 25 },
-      { id: 'crit-4', name: 'Teknik Rapor Formatı ve Şablon Uyumu', maxPoints: 25 },
+      { id: 'e1000000-0000-4000-8000-000000000001', name: 'Algoritmik Doğruluk ve Mantıksal Akış', maxPoints: 30 },
+      { id: 'e1000000-0000-4000-8000-000000000002', name: 'Kodlama Standartları ve Yorum Satırları', maxPoints: 20 },
+      { id: 'e1000000-0000-4000-8000-000000000003', name: 'Hata Yakalama ve Uç Durum Kontrolleri', maxPoints: 25 },
+      { id: 'e1000000-0000-4000-8000-000000000004', name: 'Teknik Rapor Formatı ve Şablon Uyumu', maxPoints: 25 },
     ],
   },
   {
-    id: 'asg-2',
-    classroomId: 'c1',
+    id: DEMO_UUIDS.ASSIGNMENT_2,
+    classroomId: DEMO_UUIDS.CLASSROOM_10B,
     classroomName: '10/B',
-    courseId: 'crs2',
+    courseId: DEMO_UUIDS.COURSE_NET201,
     courseCode: 'NET201',
     courseName: 'Ağ Sistemleri ve Anahtarlama',
     title: 'VLAN ve Alt Ağ Segmentasyonu Tasarım Raporu',
@@ -57,17 +77,17 @@ export const INITIAL_SEED_ASSIGNMENTS: TeacherAssignmentItem[] = [
     gradedCount: 1,
     paperPendingCount: 0,
     criteria: [
-      { id: 'crit-21', name: 'Topoloji ve Adresleme Planı', maxPoints: 25 },
-      { id: 'crit-22', name: 'VLAN ve Trunk Yapılandırması', maxPoints: 35 },
-      { id: 'crit-23', name: 'DHCP ve Yönlendirme Testleri', maxPoints: 20 },
-      { id: 'crit-24', name: 'Rapor Düzeni ve Görseller', maxPoints: 20 },
+      { id: 'e2000000-0000-4000-8000-000000000021', name: 'Topoloji ve Adresleme Planı', maxPoints: 25 },
+      { id: 'e2000000-0000-4000-8000-000000000022', name: 'VLAN ve Trunk Yapılandırması', maxPoints: 35 },
+      { id: 'e2000000-0000-4000-8000-000000000023', name: 'DHCP ve Yönlendirme Testleri', maxPoints: 20 },
+      { id: 'e2000000-0000-4000-8000-000000000024', name: 'Rapor Düzeni ve Görseller', maxPoints: 20 },
     ],
   },
   {
-    id: 'asg-3',
-    classroomId: 'c1',
+    id: DEMO_UUIDS.ASSIGNMENT_3,
+    classroomId: DEMO_UUIDS.CLASSROOM_10B,
     classroomName: '10/B',
-    courseId: 'crs2',
+    courseId: DEMO_UUIDS.COURSE_NET201,
     courseCode: 'NET201',
     courseName: 'Ağ Sistemleri ve Anahtarlama',
     title: 'Ağ Kablolama ve Patch Panel Montaj Pratiği',
@@ -81,18 +101,18 @@ export const INITIAL_SEED_ASSIGNMENTS: TeacherAssignmentItem[] = [
     gradedCount: 0,
     paperPendingCount: 1,
     criteria: [
-      { id: 'crit-31', name: 'Standart T568B Renk Sıralaması', maxPoints: 40 },
-      { id: 'crit-32', name: 'Kablo Soyma ve Soketleme Kalitesi', maxPoints: 30 },
-      { id: 'crit-33', name: 'Kablo Test Cihazı Doğrulaması', maxPoints: 30 },
+      { id: 'e3000000-0000-4000-8000-000000000031', name: 'Standart T568B Renk Sıralaması', maxPoints: 40 },
+      { id: 'e3000000-0000-4000-8000-000000000032', name: 'Kablo Soyma ve Soketleme Kalitesi', maxPoints: 30 },
+      { id: 'e3000000-0000-4000-8000-000000000033', name: 'Kablo Test Cihazı Doğrulaması', maxPoints: 30 },
     ],
   },
 ];
 
 export const INITIAL_SEED_SUBMISSIONS: Record<string, TeacherStudentSubmission[]> = {
-  'asg-1': [
+  [DEMO_UUIDS.ASSIGNMENT_1]: [
     {
-      id: 'sub-asg-1-st-1',
-      studentId: 'st-1',
+      id: 'b1000000-0000-4000-8000-000000000001',
+      studentId: DEMO_UUIDS.STUDENT_1,
       studentName: 'Ali Demir',
       schoolNumber: '1042',
       status: 'submitted',
@@ -103,8 +123,8 @@ export const INITIAL_SEED_SUBMISSIONS: Record<string, TeacherStudentSubmission[]
       criteriaScores: {},
     },
     {
-      id: 'sub-asg-1-st-2',
-      studentId: 'st-2',
+      id: 'b1000000-0000-4000-8000-000000000002',
+      studentId: DEMO_UUIDS.STUDENT_2,
       studentName: 'Ayşe Yılmaz',
       schoolNumber: '1043',
       status: 'graded',
@@ -114,17 +134,17 @@ export const INITIAL_SEED_SUBMISSIONS: Record<string, TeacherStudentSubmission[]
       evaluationStatus: 'finalized',
       evaluationComment: 'Harika kod organizasyonu ve kapsamlı hata yakalama.',
       criteriaScores: {
-        'crit-1': 30.0,
-        'crit-2': 19.0,
-        'crit-3': 24.0,
-        'crit-4': 22.0,
+        'e1000000-0000-4000-8000-000000000001': 30.0,
+        'e1000000-0000-4000-8000-000000000002': 19.0,
+        'e1000000-0000-4000-8000-000000000003': 24.0,
+        'e1000000-0000-4000-8000-000000000004': 22.0,
       },
       pdfFileName: '1043_Ayse_Yilmaz_v2.pdf',
       fileSizeBytes: 2900000,
     },
     {
-      id: 'sub-asg-1-st-3',
-      studentId: 'st-3',
+      id: 'b1000000-0000-4000-8000-000000000003',
+      studentId: DEMO_UUIDS.STUDENT_3,
       studentName: 'Can Öztürk',
       schoolNumber: '1044',
       status: 'paper_reported',
@@ -133,8 +153,8 @@ export const INITIAL_SEED_SUBMISSIONS: Record<string, TeacherStudentSubmission[]
       criteriaScores: {},
     },
     {
-      id: 'sub-asg-1-st-4',
-      studentId: 'st-4',
+      id: 'b1000000-0000-4000-8000-000000000004',
+      studentId: DEMO_UUIDS.STUDENT_4,
       studentName: 'Zeynep Kaya',
       schoolNumber: '1045',
       status: 'not_submitted',
@@ -142,10 +162,10 @@ export const INITIAL_SEED_SUBMISSIONS: Record<string, TeacherStudentSubmission[]
       criteriaScores: {},
     },
   ],
-  'asg-2': [
+  [DEMO_UUIDS.ASSIGNMENT_2]: [
     {
-      id: 'sub-asg-2-st-1',
-      studentId: 'st-1',
+      id: 'b2000000-0000-4000-8000-000000000001',
+      studentId: DEMO_UUIDS.STUDENT_1,
       studentName: 'Ali Demir',
       schoolNumber: '1042',
       status: 'graded',
@@ -157,15 +177,15 @@ export const INITIAL_SEED_SUBMISSIONS: Record<string, TeacherStudentSubmission[]
       evaluationStatus: 'finalized',
       evaluationComment: 'Tasarım şeması ve yönlendirme tabloları çok başarılı hazırlanmış. Tebrikler Ali.',
       criteriaScores: {
-        'crit-21': 25.0,
-        'crit-22': 33.5,
-        'crit-23': 18.0,
-        'crit-24': 17.0,
+        'e2000000-0000-4000-8000-000000000021': 25.0,
+        'e2000000-0000-4000-8000-000000000022': 33.5,
+        'e2000000-0000-4000-8000-000000000023': 18.0,
+        'e2000000-0000-4000-8000-000000000024': 17.0,
       },
     },
     {
-      id: 'sub-asg-2-st-2',
-      studentId: 'st-2',
+      id: 'b2000000-0000-4000-8000-000000000002',
+      studentId: DEMO_UUIDS.STUDENT_2,
       studentName: 'Ayşe Yılmaz',
       schoolNumber: '1043',
       status: 'graded',
@@ -177,15 +197,15 @@ export const INITIAL_SEED_SUBMISSIONS: Record<string, TeacherStudentSubmission[]
       evaluationStatus: 'finalized',
       evaluationComment: 'Başarılı rapor.',
       criteriaScores: {
-        'crit-21': 24.0,
-        'crit-22': 32.0,
-        'crit-23': 18.0,
-        'crit-24': 17.0,
+        'e2000000-0000-4000-8000-000000000021': 24.0,
+        'e2000000-0000-4000-8000-000000000022': 32.0,
+        'e2000000-0000-4000-8000-000000000023': 18.0,
+        'e2000000-0000-4000-8000-000000000024': 17.0,
       },
     },
     {
-      id: 'sub-asg-2-st-3',
-      studentId: 'st-3',
+      id: 'b2000000-0000-4000-8000-000000000003',
+      studentId: DEMO_UUIDS.STUDENT_3,
       studentName: 'Can Öztürk',
       schoolNumber: '1044',
       status: 'not_submitted',
@@ -193,8 +213,8 @@ export const INITIAL_SEED_SUBMISSIONS: Record<string, TeacherStudentSubmission[]
       criteriaScores: {},
     },
     {
-      id: 'sub-asg-2-st-4',
-      studentId: 'st-4',
+      id: 'b2000000-0000-4000-8000-000000000004',
+      studentId: DEMO_UUIDS.STUDENT_4,
       studentName: 'Zeynep Kaya',
       schoolNumber: '1045',
       status: 'not_submitted',
@@ -202,10 +222,10 @@ export const INITIAL_SEED_SUBMISSIONS: Record<string, TeacherStudentSubmission[]
       criteriaScores: {},
     },
   ],
-  'asg-3': [
+  [DEMO_UUIDS.ASSIGNMENT_3]: [
     {
-      id: 'sub-asg-3-st-1',
-      studentId: 'st-1',
+      id: 'b3000000-0000-4000-8000-000000000001',
+      studentId: DEMO_UUIDS.STUDENT_1,
       studentName: 'Ali Demir',
       schoolNumber: '1042',
       status: 'not_submitted',
@@ -213,8 +233,8 @@ export const INITIAL_SEED_SUBMISSIONS: Record<string, TeacherStudentSubmission[]
       criteriaScores: {},
     },
     {
-      id: 'sub-asg-3-st-2',
-      studentId: 'st-2',
+      id: 'b3000000-0000-4000-8000-000000000002',
+      studentId: DEMO_UUIDS.STUDENT_2,
       studentName: 'Ayşe Yılmaz',
       schoolNumber: '1043',
       status: 'not_submitted',
@@ -222,8 +242,8 @@ export const INITIAL_SEED_SUBMISSIONS: Record<string, TeacherStudentSubmission[]
       criteriaScores: {},
     },
     {
-      id: 'sub-asg-3-st-3',
-      studentId: 'st-3',
+      id: 'b3000000-0000-4000-8000-000000000003',
+      studentId: DEMO_UUIDS.STUDENT_3,
       studentName: 'Can Öztürk',
       schoolNumber: '1044',
       status: 'paper_reported',
@@ -232,8 +252,8 @@ export const INITIAL_SEED_SUBMISSIONS: Record<string, TeacherStudentSubmission[]
       criteriaScores: {},
     },
     {
-      id: 'sub-asg-3-st-4',
-      studentId: 'st-4',
+      id: 'b3000000-0000-4000-8000-000000000004',
+      studentId: DEMO_UUIDS.STUDENT_4,
       studentName: 'Zeynep Kaya',
       schoolNumber: '1045',
       status: 'not_submitted',
@@ -295,6 +315,7 @@ function writeToStorage<T>(key: string, value: T): void {
 export function resetTaskStorage(): void {
   delete memoryStorage[STORAGE_KEYS.ASSIGNMENTS];
   delete memoryStorage[STORAGE_KEYS.SUBMISSIONS];
+  isLiveDatabaseAvailable = null;
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       window.localStorage.removeItem(STORAGE_KEYS.ASSIGNMENTS);
@@ -307,20 +328,29 @@ export function resetTaskStorage(): void {
 
 // Açık mod seçimi: 'auto' (çevreye göre), 'demo' (yerel fallback zorunlu), 'live' (Supabase zorunlu)
 let currentTaskServiceMode: 'auto' | 'demo' | 'live' = 'auto';
+let isLiveDatabaseAvailable: boolean | null = null;
 
 export function setTaskServiceMode(mode: 'auto' | 'demo' | 'live'): void {
   currentTaskServiceMode = mode;
+  if (mode === 'demo') {
+    isLiveDatabaseAvailable = false;
+  } else if (mode === 'live') {
+    isLiveDatabaseAvailable = true;
+  } else {
+    isLiveDatabaseAvailable = null;
+  }
 }
 
 export function isTaskServiceInDemoMode(): boolean {
   if (currentTaskServiceMode === 'demo') return true;
   if (currentTaskServiceMode === 'live') return false;
-  return !isSupabaseConfigured;
+  return !isSupabaseConfigured || isLiveDatabaseAvailable === false;
 }
 
 function shouldUseSupabase(): boolean {
   if (currentTaskServiceMode === 'demo') return false;
   if (currentTaskServiceMode === 'live') return true;
+  if (isLiveDatabaseAvailable === false) return false;
   return Boolean(isSupabaseConfigured && supabase);
 }
 
@@ -353,10 +383,19 @@ export async function loadAssignmentsAndSubmissions(): Promise<{
       .order('created_at', { ascending: false });
 
     if (asgErr) {
-      throw new Error(`Görevler veritabanından alınamadı: ${asgErr.message}`);
-    }
+      if (currentTaskServiceMode === 'live') {
+        throw new Error(`Görevler veritabanından alınamadı: ${asgErr.message}`);
+      }
 
-    if (assignmentsData && assignmentsData.length > 0) {
+      // Auto modda tablolar henüz Supabase üzerinde oluşturulmamışsa (unmigrated database)
+      // veya PostgREST şema önbelleğinde yoksa güvenli yerel fallback moduna geç
+      isLiveDatabaseAvailable = false;
+      console.warn(
+        `Supabase tabloları henüz oluşturulmamış veya erişilemiyor (${asgErr.message}). Çevrimdışı/Demo kalıcılık moduna geçildi.`
+      );
+    } else if (assignmentsData !== null && assignmentsData !== undefined) {
+      isLiveDatabaseAvailable = true;
+
       const { data: subsData, error: subsErr } = await supabase
         .from('student_task_assignments')
         .select(`
@@ -374,77 +413,83 @@ export async function loadAssignmentsAndSubmissions(): Promise<{
         `);
 
       if (subsErr) {
-        throw new Error(`Öğrenci teslim verileri veritabanından alınamadı: ${subsErr.message}`);
-      }
-
-      const mappedAssignments: TeacherAssignmentItem[] = assignmentsData.map((row: any) => ({
-        id: row.id,
-        classroomId: row.classroom_id,
-        classroomName: row.classrooms?.name || '10/B',
-        courseId: row.course_id,
-        courseName: row.courses?.name || 'Ders',
-        courseCode: row.courses?.code || 'CRS',
-        title: row.title,
-        description: row.description,
-        deliveryFormat: row.delivery_format,
-        dueDate: row.due_date,
-        status: row.status,
-        studentCount: 34,
-        submittedCount: 0,
-        gradedCount: 0,
-        paperPendingCount: 0,
-        criteria: (row.rubric_criteria || []).map((c: any) => ({
-          id: c.id,
-          name: c.name,
-          maxPoints: Number(c.max_points),
-          description: c.description,
-        })),
-      }));
-
-      const mappedSubs: Record<string, TeacherStudentSubmission[]> = {};
-      mappedAssignments.forEach((asg) => {
-        mappedSubs[asg.id] = [];
-      });
-
-      (subsData || []).forEach((row: any) => {
-        const asgId = row.task_assignment_id;
-        if (!mappedSubs[asgId]) mappedSubs[asgId] = [];
-
-        const lastVersion = row.submission_versions?.[row.submission_versions.length - 1];
-        const evaluation = row.task_evaluations?.[0];
-        const criteriaScores: Record<string, number> = {};
-        if (evaluation?.evaluation_criterion_scores) {
-          evaluation.evaluation_criterion_scores.forEach((es: any) => {
-            if (es.rubric_criterion_id) {
-              criteriaScores[es.rubric_criterion_id] = Number(es.score);
-            }
-          });
+        if (currentTaskServiceMode === 'live') {
+          throw new Error(`Öğrenci teslim verileri veritabanından alınamadı: ${subsErr.message}`);
         }
-
-        mappedSubs[asgId].push({
+        isLiveDatabaseAvailable = false;
+        console.warn(
+          `Öğrenci teslim tablosu henüz hazır değil (${subsErr.message}). Çevrimdışı/Demo kalıcılık moduna geçildi.`
+        );
+      } else {
+        const mappedAssignments: TeacherAssignmentItem[] = assignmentsData.map((row: any) => ({
           id: row.id,
-          studentId: row.student_id,
-          studentName: row.user_profiles?.full_name || 'Öğrenci',
-          schoolNumber: row.user_profiles?.school_number || '0000',
+          classroomId: row.classroom_id,
+          classroomName: row.classrooms?.name || '10/B',
+          courseId: row.course_id,
+          courseName: row.courses?.name || 'Ders',
+          courseCode: row.courses?.code || 'CRS',
+          title: row.title,
+          description: row.description,
+          deliveryFormat: row.delivery_format,
+          dueDate: row.due_date,
           status: row.status,
-          submissionCount: row.submission_count || 0,
-          lastSubmittedAt: lastVersion?.submitted_at,
-          paperReportedAt: row.paper_delivery_reported_at,
-          paperConfirmedAt: row.paper_delivery_confirmed_at,
-          score: row.score !== null && row.score !== undefined ? Number(row.score) : undefined,
-          evaluationStatus: evaluation?.status,
-          evaluationComment: evaluation?.general_comment,
-          criteriaScores,
-          pdfFileName: lastVersion?.file_name,
-          fileSizeBytes: lastVersion?.file_size_bytes,
-        });
-      });
+          studentCount: 34,
+          submittedCount: 0,
+          gradedCount: 0,
+          paperPendingCount: 0,
+          criteria: (row.rubric_criteria || []).map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            maxPoints: Number(c.max_points),
+            description: c.description,
+          })),
+        }));
 
-      return {
-        assignments: mappedAssignments,
-        submissionsByAssignment: mappedSubs,
-        isOfflineFallback: false,
-      };
+        const mappedSubs: Record<string, TeacherStudentSubmission[]> = {};
+        mappedAssignments.forEach((asg) => {
+          mappedSubs[asg.id] = [];
+        });
+
+        (subsData || []).forEach((row: any) => {
+          const asgId = row.task_assignment_id;
+          if (!mappedSubs[asgId]) mappedSubs[asgId] = [];
+
+          const lastVersion = row.submission_versions?.[row.submission_versions.length - 1];
+          const evaluation = row.task_evaluations?.[0];
+          const criteriaScores: Record<string, number> = {};
+          if (evaluation?.evaluation_criterion_scores) {
+            evaluation.evaluation_criterion_scores.forEach((es: any) => {
+              if (es.rubric_criterion_id) {
+                criteriaScores[es.rubric_criterion_id] = Number(es.score);
+              }
+            });
+          }
+
+          mappedSubs[asgId].push({
+            id: row.id,
+            studentId: row.student_id,
+            studentName: row.user_profiles?.full_name || 'Öğrenci',
+            schoolNumber: row.user_profiles?.school_number || '0000',
+            status: row.status,
+            submissionCount: row.submission_count || 0,
+            lastSubmittedAt: lastVersion?.submitted_at,
+            paperReportedAt: row.paper_delivery_reported_at,
+            paperConfirmedAt: row.paper_delivery_confirmed_at,
+            score: row.score !== null && row.score !== undefined ? Number(row.score) : undefined,
+            evaluationStatus: evaluation?.status,
+            evaluationComment: evaluation?.general_comment,
+            criteriaScores,
+            pdfFileName: lastVersion?.file_name,
+            fileSizeBytes: lastVersion?.file_size_bytes,
+          });
+        });
+
+        return {
+          assignments: mappedAssignments,
+          submissionsByAssignment: mappedSubs,
+          isOfflineFallback: false,
+        };
+      }
     }
   }
 
@@ -473,7 +518,7 @@ export async function saveCreatedAssignment(
   initialStudents: TeacherStudentSubmission[],
   teacherId?: string
 ): Promise<{ assignmentId: string }> {
-  if (isSupabaseConfigured && supabase) {
+  if (shouldUseSupabase() && supabase) {
     const authUser = (await supabase.auth.getUser()).data.user;
     const resolvedTeacherId = teacherId || authUser?.id;
     if (!resolvedTeacherId) {
@@ -565,7 +610,7 @@ export async function saveStudentPdfSubmission(
     throw new Error(validation.error || 'Dosya 15 MB sınırını aşıyor.');
   }
 
-  if (isSupabaseConfigured && supabase) {
+  if (shouldUseSupabase() && supabase) {
     const authUser = (await supabase.auth.getUser()).data.user;
     const resolvedStudentId = studentId || authUser?.id;
     if (!resolvedStudentId) {
@@ -585,7 +630,7 @@ export async function saveStudentPdfSubmission(
 
     const nextVersion = (subRecord.submission_count || 0) + 1;
     const fileName = `${schoolNumber}_v${nextVersion}.pdf`;
-    const dummyFileUrl = `https://storage.supabase.co/student-submissions/${taskId}/${fileName}`;
+    const dummyFileUrl = `https://storage.supabase.co/storage/v1/object/public/task-submissions/${resolvedStudentId}/${taskId}/${fileName}`;
 
     const { error: verErr } = await supabase.from('submission_versions').insert({
       student_task_assignment_id: subRecord.id,
@@ -656,7 +701,7 @@ export async function savePaperDeliveryReport(
   schoolNumber: string,
   studentId?: string
 ): Promise<void> {
-  if (isSupabaseConfigured && supabase) {
+  if (shouldUseSupabase() && supabase) {
     const authUser = (await supabase.auth.getUser()).data.user;
     const resolvedStudentId = studentId || authUser?.id;
     if (!resolvedStudentId) {
@@ -709,7 +754,7 @@ export async function savePaperDeliveryConfirmation(
   submissionId: string,
   teacherId?: string
 ): Promise<void> {
-  if (isSupabaseConfigured && supabase) {
+  if (shouldUseSupabase() && supabase) {
     const authUser = (await supabase.auth.getUser()).data.user;
     const resolvedTeacherId = teacherId || authUser?.id;
     if (!resolvedTeacherId) {
@@ -773,36 +818,65 @@ export async function saveGradingEvaluation(
     }))
   );
 
-  if (isSupabaseConfigured && supabase) {
+  if (shouldUseSupabase() && supabase) {
     const authUser = (await supabase.auth.getUser()).data.user;
     const resolvedTeacherId = teacherId || authUser?.id;
     if (!resolvedTeacherId) {
       throw new Error('Notlandırma kaydetmek için yetkili öğretmen oturumu gereklidir.');
     }
 
-    // 1. task_evaluations kaydını upsert et
-    const { data: evalRecord, error: evalErr } = await supabase
-      .from('task_evaluations')
-      .upsert(
-        {
-          student_task_assignment_id: submissionId,
-          teacher_id: resolvedTeacherId,
-          status: isFinal ? 'finalized' : 'draft',
-          total_score: totalScore,
-          general_comment: comment,
-          finalized_at: isFinal ? new Date().toISOString() : null,
-        },
-        { onConflict: 'student_task_assignment_id' }
-      )
-      .select('id')
-      .single();
+    let evaluationId: string | null = null;
 
-    if (evalErr || !evalRecord) {
-      throw new Error(`Değerlendirme kaydedilemedi: ${evalErr?.message || ''}`);
+    // Gerekçe varsa veya RPC tanımlıysa atomik RPC fonksiyonunu çağır (app.grade_change_reason ayarlar)
+    if (reason && reason.trim()) {
+      try {
+        const { data: rpcEvalId, error: rpcErr } = await (supabase.rpc as any)(
+          'save_evaluation_with_reason',
+          {
+            p_student_task_assignment_id: submissionId,
+            p_teacher_id: resolvedTeacherId,
+            p_status: isFinal ? 'finalized' : 'draft',
+            p_total_score: totalScore,
+            p_general_comment: comment,
+            p_change_reason: reason.trim(),
+          }
+        );
+        if (!rpcErr && rpcEvalId) {
+          evaluationId = rpcEvalId;
+        }
+      } catch {
+        // RPC henüz veritabanında oluşturulmamışsa standart upsert ile devam edilir
+      }
     }
 
-    // 2. evaluation_criterion_scores tablosuna ölçüt puanlarını kaydet
-    const evaluationId = evalRecord.id;
+    if (!evaluationId) {
+      // 1. task_evaluations kaydını standart upsert et
+      const { data: evalRecord, error: evalErr } = await supabase
+        .from('task_evaluations')
+        .upsert(
+          {
+            student_task_assignment_id: submissionId,
+            teacher_id: resolvedTeacherId,
+            status: isFinal ? 'finalized' : 'draft',
+            total_score: totalScore,
+            general_comment: comment,
+            finalized_at: isFinal ? new Date().toISOString() : null,
+          },
+          { onConflict: 'student_task_assignment_id' }
+        )
+        .select('id')
+        .single();
+
+      if (evalErr || !evalRecord) {
+        if (evalErr?.message?.includes('gerekçe')) {
+          throw new Error(
+            `Kesinleşmiş not değişikliği için gerekçe belirtilmesi zorunludur: ${evalErr.message}`
+          );
+        }
+        throw new Error(`Değerlendirme kaydedilemedi: ${evalErr?.message || ''}`);
+      }
+      evaluationId = evalRecord.id;
+    }
     const scoreRows = Object.entries(scores).map(([rubricCriterionId, score]) => ({
       evaluation_id: evaluationId,
       rubric_criterion_id: rubricCriterionId,
@@ -851,6 +925,7 @@ export async function saveGradingEvaluation(
           evaluationStatus: isFinal ? ('finalized' as const) : ('draft' as const),
           evaluationComment: comment,
           criteriaScores: { ...scores },
+          changeReason: reason,
         }
       : s
   );
@@ -874,7 +949,7 @@ export function subscribeToTaskChanges(
 ): () => void {
   // 1. Supabase Realtime Kanalı (Tüm İlgili Tabloları Dinler)
   let supabaseChannel: any = null;
-  if (isSupabaseConfigured && supabase) {
+  if (shouldUseSupabase() && supabase) {
     try {
       const handleRealtimeChange = async () => {
         try {
@@ -967,3 +1042,56 @@ export function sanitizeSubmissionsForStudent(
   }
   return isolated;
 }
+
+/**
+ * 9. Öğretmen Sınıf ve Ders Yetki Kontrolü
+ * Canlı Supabase ortamında teacher_permissions tablosunu sorgular.
+ */
+export async function checkTeacherPermission(
+  teacherId: string,
+  classroomId: string,
+  courseId: string,
+  academicYear: string = '2026-2027'
+): Promise<boolean> {
+  if (shouldUseSupabase() && supabase) {
+    const { data, error } = await supabase
+      .from('teacher_permissions')
+      .select('id')
+      .eq('teacher_id', teacherId)
+      .eq('classroom_id', classroomId)
+      .eq('course_id', courseId)
+      .eq('academic_year', academicYear)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('Öğretmen yetki kontrolü sorgu hatası:', error.message);
+      return false;
+    }
+    return !!data;
+  }
+  // Demo modunda varsayılan yetkilendirilmiş kabul edilir
+  return true;
+}
+
+/**
+ * 10. Özel (Private) task-submissions Deposu İçin İmzalı İndirme Bağlantısı (Signed URL)
+ * RLS kurallarına uygun olarak geçerli oturumla 1 saatlik geçici güvenli bağlantı üretir.
+ */
+export async function getSubmissionPdfSignedUrl(
+  filePath: string,
+  expiresInSeconds: number = 3600
+): Promise<string | null> {
+  if (shouldUseSupabase() && supabase) {
+    const { data, error } = await supabase.storage
+      .from('task-submissions')
+      .createSignedUrl(filePath, expiresInSeconds);
+
+    if (error || !data?.signedUrl) {
+      console.warn('İmzalı indirme bağlantısı üretilemedi:', error?.message);
+      return null;
+    }
+    return data.signedUrl;
+  }
+  return null;
+}
+

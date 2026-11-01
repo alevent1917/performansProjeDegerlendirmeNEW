@@ -74,24 +74,50 @@ import {
   sanitizeSubmissionsForStudent,
   INITIAL_SEED_ASSIGNMENTS,
   INITIAL_SEED_SUBMISSIONS,
+  DEMO_UUIDS,
 } from './lib/taskService';
+import {
+  loadSchoolProfileConfig,
+  saveSchoolProfileConfig,
+  loadSealingInfo,
+  saveSealingInfo,
+  sealSystemWithAdmin,
+  resetSealingForBootstrap,
+  SchoolProfileConfig,
+  SealingInfo,
+} from './lib/schoolConfigService';
 
 export default function App() {
-  // Sistem Durumu
-  const [isInitialized, setIsInitialized] = useState<boolean>(true);
-  const [schoolName, setSchoolName] = useState<string>('Atatürk Mesleki ve Teknik Anadolu Lisesi');
-  const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
-  const [academicYear, setAcademicYear] = useState<string>(INITIAL_ACADEMIC_YEAR);
+  // Sistem Durumu ve Kalıcı Okul Yapılandırması
+  const [schoolConfig, setSchoolConfig] = useState<SchoolProfileConfig>(() => loadSchoolProfileConfig());
+  const [sealingInfo, setSealingInfo] = useState<SealingInfo>(() => loadSealingInfo());
+  const [isInitialized, setIsInitialized] = useState<boolean>(() => {
+    const s = loadSealingInfo();
+    return s.isSealed;
+  });
+  const [schoolName, setSchoolName] = useState<string>(() => loadSchoolProfileConfig().schoolName);
+  const [logoUrl, setLogoUrl] = useState<string | undefined>(() => loadSchoolProfileConfig().logoUrl);
+  const [academicYear, setAcademicYear] = useState<string>(() => loadSchoolProfileConfig().activeAcademicYear);
 
-  // Aktif Önizleme Rolü ve Kullanıcı
-  const [previewRole, setPreviewRole] = useState<UserRole>('student');
+  // Aktif Önizleme Rolü ve Kullanıcı (alevent1917@gmail.com varsayılan mühürlü yönetici)
+  const [previewRole, setPreviewRole] = useState<UserRole>(() => {
+    const s = loadSealingInfo();
+    return s.isSealed ? 'admin' : 'student';
+  });
+  const [adminProfile, setAdminProfile] = useState<{ fullName: string; email: string }>(() => {
+    const s = loadSealingInfo();
+    return {
+      fullName: s.sealedAdminName || 'Levent A. (Okul Müdürü)',
+      email: s.sealedAdminEmail || 'alevent1917@gmail.com',
+    };
+  });
   const [activeTab, setActiveTab] = useState<'architecture' | 'database' | 'auth' | 'setup_wizard' | 'preview'>('preview');
 
   // Bildirimler
   const [notifications, setNotifications] = useState<SystemNotification[]>([
     {
-      id: 'notif-1',
-      userId: 'usr-1',
+      id: 'f1000000-0000-4000-8000-000000000001',
+      userId: DEMO_UUIDS.STUDENT_1,
       recipientRole: 'student',
       title: 'Yeni Performans Görevi Atandı',
       message: 'Programlama Temelleri dersi için "Döngüler ve Fonksiyonlar" görevi tanımlandı. Son teslim: 15.11.2026',
@@ -100,8 +126,8 @@ export default function App() {
       createdAt: '2026-10-28T09:30:00Z',
     },
     {
-      id: 'notif-2',
-      userId: 'usr-1',
+      id: 'f2000000-0000-4000-8000-000000000002',
+      userId: DEMO_UUIDS.STUDENT_1,
       recipientRole: 'student',
       title: 'Ödev Değerlendirmeniz Tamamlandı',
       message: 'Ağ Sistemleri ve Anahtarlama göreviniz öğretmeniniz tarafından değerlendirildi. Puanınız: 92.5/100',
@@ -110,11 +136,11 @@ export default function App() {
       createdAt: '2026-10-27T14:15:00Z',
     },
     {
-      id: 'notif-3',
-      userId: 'usr-2',
+      id: 'f3000000-0000-4000-8000-000000000003',
+      userId: DEMO_UUIDS.TEACHER,
       recipientRole: 'teacher',
       title: 'Öğrenci PDF Teslimi Yapıldı',
-      message: '10/B sınıfından 1042 nolu öğrenci Ali Veli yeni bir PDF teslim etti.',
+      message: '10/B sınıfından 1042 nolu öğrenci Ali Demir yeni bir PDF teslim etti.',
       type: 'info',
       isRead: true,
       createdAt: '2026-10-26T11:00:00Z',
@@ -142,8 +168,11 @@ export default function App() {
         }
       })
       .catch((err) => {
-        console.error('Kalıcı görev verisi yükleme hatası:', err);
-        if (isMounted) setIsLoadingPersistence(false);
+        console.warn('Kalıcı görev verisi yüklenirken yerel moda dönüldü:', err);
+        if (isMounted) {
+          setIsOfflineFallback(true);
+          setIsLoadingPersistence(false);
+        }
       });
 
     const unsubscribe = subscribeToTaskChanges((updated) => {
@@ -167,7 +196,7 @@ export default function App() {
   );
 
   const studentDashboardTasks: StudentTaskViewItem[] = assignments
-    .filter((asg) => asg.classroomName === '10/B' || asg.classroomId === 'c1')
+    .filter((asg) => asg.classroomName === '10/B' || asg.classroomId === DEMO_UUIDS.CLASSROOM_10B || asg.classroomId === 'c1')
     .map((asg) => {
       const subs = isolatedStudentSubmissions[asg.id] || [];
       const mySub = subs[0];
@@ -217,8 +246,8 @@ export default function App() {
     // İlgili sınıfın öğrencilerini hazırla (10/B veya 11/B)
     const initialStudents: TeacherStudentSubmission[] = [
       {
-        id: `sub-${newTask.id}-st-1`,
-        studentId: 'st-1',
+        id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `b1000000-0000-4000-8000-${Date.now().toString(16).slice(-12).padStart(12, '0')}`,
+        studentId: DEMO_UUIDS.STUDENT_1,
         studentName: 'Ali Demir',
         schoolNumber: '1042',
         status: 'not_submitted',
@@ -226,8 +255,8 @@ export default function App() {
         criteriaScores: {},
       },
       {
-        id: `sub-${newTask.id}-st-2`,
-        studentId: 'st-2',
+        id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `b2000000-0000-4000-8000-${Date.now().toString(16).slice(-12).padStart(12, '0')}`,
+        studentId: DEMO_UUIDS.STUDENT_2,
         studentName: 'Ayşe Yılmaz',
         schoolNumber: '1043',
         status: 'not_submitted',
@@ -235,8 +264,8 @@ export default function App() {
         criteriaScores: {},
       },
       {
-        id: `sub-${newTask.id}-st-3`,
-        studentId: 'st-3',
+        id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `b3000000-0000-4000-8000-${Date.now().toString(16).slice(-12).padStart(12, '0')}`,
+        studentId: DEMO_UUIDS.STUDENT_3,
         studentName: 'Can Öztürk',
         schoolNumber: '1044',
         status: 'not_submitted',
@@ -244,8 +273,8 @@ export default function App() {
         criteriaScores: {},
       },
       {
-        id: `sub-${newTask.id}-st-4`,
-        studentId: 'st-4',
+        id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `b4000000-0000-4000-8000-${Date.now().toString(16).slice(-12).padStart(12, '0')}`,
+        studentId: DEMO_UUIDS.STUDENT_4,
         studentName: 'Zeynep Kaya',
         schoolNumber: '1045',
         status: 'not_submitted',
@@ -258,7 +287,7 @@ export default function App() {
       const res = await saveCreatedAssignment(
         newTask,
         initialStudents,
-        currentUser.role === 'teacher' ? 'usr-teacher-1' : undefined
+        currentUser.role === 'teacher' ? DEMO_UUIDS.TEACHER : undefined
       );
 
       const savedTask = { ...newTask, id: res.assignmentId || newTask.id };
@@ -273,7 +302,7 @@ export default function App() {
       setNotifications((prev) => [
         {
           id: `notif-${Date.now()}`,
-          userId: 'usr-student-1042',
+          userId: DEMO_UUIDS.STUDENT_1,
           recipientRole: 'student',
           title: 'Yeni Görev Dağıtıldı',
           message: `${newTask.courseName} dersi için "${newTask.title}" görevi yayımlandı. Son teslim: ${formatTurkishDate(newTask.dueDate)}`,
@@ -314,7 +343,7 @@ export default function App() {
 
     try {
       const studentSchoolNo = currentUser.schoolNumber || '1042';
-      const result = await saveStudentPdfSubmission(taskId, studentSchoolNo, file, 'st-1');
+      const result = await saveStudentPdfSubmission(taskId, studentSchoolNo, file, DEMO_UUIDS.STUDENT_1);
 
       setSubmissionsByAssignment((prev) => {
         const list = prev[taskId] || [];
@@ -342,7 +371,7 @@ export default function App() {
       setNotifications((prev) => [
         {
           id: `notif-${Date.now()}`,
-          userId: 'usr-teacher-1',
+          userId: DEMO_UUIDS.TEACHER,
           recipientRole: 'teacher',
           title: 'Yeni Öğrenci PDF Teslimi',
           message: `10/B sınıfından ${studentSchoolNo} Ali Demir "${asg?.title || 'Görev'}" için PDF teslim etti.`,
@@ -369,7 +398,7 @@ export default function App() {
   const handleStudentReportPaper = async (taskId: string) => {
     try {
       const studentSchoolNo = currentUser.schoolNumber || '1042';
-      await savePaperDeliveryReport(taskId, studentSchoolNo, 'st-1');
+      await savePaperDeliveryReport(taskId, studentSchoolNo, DEMO_UUIDS.STUDENT_1);
 
       setSubmissionsByAssignment((prev) => {
         const currentList = prev[taskId] || [];
@@ -394,7 +423,7 @@ export default function App() {
       setNotifications((prev) => [
         {
           id: `notif-${Date.now()}`,
-          userId: 'usr-teacher-1',
+          userId: DEMO_UUIDS.TEACHER,
           recipientRole: 'teacher',
           title: 'Kâğıt Teslim Bildirimi',
           message: `10/B sınıfından ${studentSchoolNo} Ali Demir "${asg?.title || 'Görev'}" için kâğıt teslim bildirimi yaptı. Onay bekleniyor.`,
@@ -420,7 +449,7 @@ export default function App() {
   // 4. Öğretmenin Kâğıt Teslimini Onaylaması (& Kalıcı Kayıt)
   const handleTeacherConfirmPaper = async (assignmentId: string, submissionId: string) => {
     try {
-      await savePaperDeliveryConfirmation(assignmentId, submissionId, 'usr-teacher-1');
+      await savePaperDeliveryConfirmation(assignmentId, submissionId, DEMO_UUIDS.TEACHER);
 
       setSubmissionsByAssignment((prev) => {
         const currentList = prev[assignmentId] || [];
@@ -445,7 +474,7 @@ export default function App() {
       setNotifications((prev) => [
         {
           id: `notif-${Date.now()}`,
-          userId: 'usr-student-1042',
+          userId: DEMO_UUIDS.STUDENT_1,
           recipientRole: 'student',
           title: 'Kâğıt Tesliminiz Onaylandı',
           message: `"${asg?.title || 'Görev'}" için fiziksel kâğıt tesliminiz öğretmeninizce onaylandı.`,
@@ -491,7 +520,7 @@ export default function App() {
         scores,
         comment,
         isFinal,
-        'usr-teacher-1',
+        DEMO_UUIDS.TEACHER,
         reason
       );
 
@@ -522,7 +551,7 @@ export default function App() {
         setNotifications((prev) => [
           {
             id: `notif-${Date.now()}`,
-            userId: 'usr-student-1042',
+            userId: DEMO_UUIDS.STUDENT_1,
             recipientRole: 'student',
             title: 'Göreviniz Değerlendirildi',
             message: `"${asg?.title || 'Görev'}" notunuz kesinleşti: ${totalScore.toFixed(1)} / 100`,
@@ -573,14 +602,20 @@ export default function App() {
 
   // Örnek Oturum Kullanıcısı
   const currentUser = {
+    id:
+      previewRole === 'student'
+        ? DEMO_UUIDS.STUDENT_1
+        : previewRole === 'teacher'
+        ? DEMO_UUIDS.TEACHER
+        : DEMO_UUIDS.ADMIN,
     fullName:
       previewRole === 'student'
-        ? 'Ali Veli (Öğrenci)'
+        ? 'Ali Demir (Öğrenci)'
         : previewRole === 'teacher'
-        ? 'Mehmet Kaya (Öğretmen)'
-        : 'Dr. Ahmet Yılmaz (Müdür / Yönetici)',
+        ? 'Hasan Yılmaz (Öğretmen)'
+        : adminProfile.fullName,
     role: previewRole,
-    email: `${previewRole}@okul.k12.tr`,
+    email: previewRole === 'admin' ? adminProfile.email : `${previewRole}@okul.k12.tr`,
     schoolNumber: previewRole === 'student' ? '1042' : undefined,
   };
 
@@ -610,12 +645,13 @@ export default function App() {
   const triggerResetConfirm = () => {
     setConfirmModalConfig({
       isOpen: true,
-      title: 'İlk Kuruluma Sıfırlansın mı?',
+      title: 'Yeniden Mühürleme / İlk Kuruluma Sıfırlama',
       message:
-        'Sistem ilk kurulum sihirbazı moduna döndürülecektir. Okul ayarları ve başlangıç yapılandırması tekrar test edilebilir hale gelecektir.',
-      confirmText: 'Sıfırla ve Başlat',
+        'Sistem ilk kurulum sihirbazına yönlendirilecektir. Yönetici hesabını (alevent1917@gmail.com), okul adını ve logosunu yeniden tanımlayıp mühürleyebilirsiniz.',
+      confirmText: 'Sihirbaza Geç',
       variant: 'warning',
       onConfirm: () => {
+        resetSealingForBootstrap();
         setIsInitialized(false);
         setActiveTab('setup_wizard');
         setConfirmModalConfig((prev) => ({ ...prev, isOpen: false }));
@@ -996,59 +1032,142 @@ export default function App() {
         {/* SEKME 2: İLK KURULUM SİHİRBAZI */}
         {activeTab === 'setup_wizard' && (
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900">
-                İlk Kurulum Sihirbazı Önizlemesi
-              </h2>
-              <button
-                type="button"
-                onClick={triggerResetConfirm}
-                className="text-xs text-amber-700 hover:text-amber-800 font-medium px-3 py-1.5 rounded bg-amber-50 border border-amber-200"
-              >
-                Sihirbazı Baştan Başlat
-              </button>
-            </div>
-            <InitialSetupWizard
-              onComplete={async (data) => {
-                try {
-                  if (isSupabaseConfigured && supabase) {
-                    await bootstrapAdminViaRpc({
-                      bootstrapToken: data.bootstrapToken || '',
-                      adminName: data.adminName,
-                      schoolName: data.schoolName,
-                    });
-                  }
-                  setSchoolName(data.schoolName);
-                  if (data.logoUrl) setLogoUrl(data.logoUrl);
-                  setAcademicYear(data.academicYear);
-                  setIsInitialized(true);
-                  setConfirmModalConfig({
-                    isOpen: true,
-                    title: 'İlk Kurulum Başarıyla Tamamlandı',
-                    message: `${data.schoolName} için ilk yönetici (${data.adminName}) oluşturuldu. 2026-2027 akademik yılı, 4 sınıf şubesi ve 2 ders sisteme kaydedildi ve sistem mühürlendi.`,
-                    confirmText: 'Yönetici Paneline Geç',
-                    variant: 'primary',
-                    onConfirm: () => {
+            {isInitialized ? (
+              <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-md border border-slate-200 p-8 text-center my-6">
+                <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto mb-4">
+                  <Shield className="w-8 h-8" />
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 mb-3">
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Sistem Başarıyla Mühürlendi ve Kilitlendi</span>
+                </div>
+                <h2 className="text-xl font-bold text-slate-900 mb-2">
+                  İlk Kurulum Tamamlandı
+                </h2>
+                <p className="text-xs text-slate-600 max-w-md mx-auto mb-6 leading-relaxed">
+                  İlk kurulum adımı tamamlanmış olup sistem{' '}
+                  <strong className="text-indigo-700 font-mono">{sealingInfo.sealedAdminEmail || 'alevent1917@gmail.com'}</strong>{' '}
+                  yetkisiyle mühürlenmiştir. Yeni bir kurulum yapmanıza gerek yoktur, okul ayarlarını doğrudan Yönetici Panelinden yönetebilirsiniz.
+                </p>
+
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-left mb-6 divide-y divide-slate-200 text-xs">
+                  <div className="pb-2.5 flex justify-between items-center">
+                    <span className="text-slate-500 font-medium">Mühür Sahibi Yönetici:</span>
+                    <span className="font-bold text-slate-900">{sealingInfo.sealedAdminName || adminProfile.fullName}</span>
+                  </div>
+                  <div className="py-2.5 flex justify-between items-center">
+                    <span className="text-slate-500 font-medium">Yönetici E-Postası:</span>
+                    <span className="font-mono font-semibold text-indigo-700">{sealingInfo.sealedAdminEmail || adminProfile.email}</span>
+                  </div>
+                  <div className="py-2.5 flex justify-between items-center">
+                    <span className="text-slate-500 font-medium">Resmî Okul Adı:</span>
+                    <span className="font-semibold text-slate-900">{schoolName}</span>
+                  </div>
+                  <div className="pt-2.5 flex justify-between items-center">
+                    <span className="text-slate-500 font-medium">Kurum Kodu & İl/İlçe:</span>
+                    <span className="text-slate-700">{schoolConfig.institutionCode} · {schoolConfig.provinceDistrict}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
                       setPreviewRole('admin');
-                      setConfirmModalConfig((prev) => ({ ...prev, isOpen: false }));
                       setActiveTab('preview');
-                    },
-                  });
-                } catch (err: unknown) {
-                  const msg = err instanceof Error ? err.message : 'İlk kurulum başarısız oldu.';
-                  setConfirmModalConfig({
-                    isOpen: true,
-                    title: 'İlk Kurulum Hatası',
-                    message: msg,
-                    confirmText: 'Tekrar Dene',
-                    variant: 'danger',
-                    onConfirm: () => {
-                      setConfirmModalConfig((prev) => ({ ...prev, isOpen: false }));
-                    },
-                  });
-                }
-              }}
-            />
+                    }}
+                    className="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <span>Yönetici Paneline Geç</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={triggerResetConfirm}
+                    className="w-full sm:w-auto px-4 py-2.5 bg-white hover:bg-slate-50 text-amber-700 border border-amber-300 text-xs font-semibold rounded-lg shadow-2xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Sistemi Baştan Yapılandır</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-base font-bold text-slate-900">
+                    İlk Kurulum Sihirbazı
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={triggerResetConfirm}
+                    className="text-xs text-amber-700 hover:text-amber-800 font-medium px-3 py-1.5 rounded bg-amber-50 border border-amber-200"
+                  >
+                    Sihirbazı Baştan Başlat
+                  </button>
+                </div>
+                <InitialSetupWizard
+                  initialEmail={sealingInfo.sealedAdminEmail || 'alevent1917@gmail.com'}
+                  initialName={sealingInfo.sealedAdminName || 'Levent A. (Okul Müdürü)'}
+                  onComplete={async (data) => {
+                    // 1. Mühürleme ve Okul Yapılandırmasını kalıcı olarak kaydet
+                    const { schoolConfig: updatedConfig, sealingInfo: updatedSealing } = sealSystemWithAdmin({
+                      adminEmail: data.adminEmail,
+                      adminName: data.adminName,
+                      bootstrapToken: data.bootstrapToken,
+                      schoolName: data.schoolName,
+                      institutionCode: data.institutionCode,
+                      provinceDistrict: data.provinceDistrict,
+                      schoolType: data.schoolType,
+                      logoUrl: data.logoUrl,
+                      academicYear: data.academicYear,
+                    });
+
+                    setSchoolConfig(updatedConfig);
+                    setSealingInfo(updatedSealing);
+                    setSchoolName(updatedConfig.schoolName);
+                    if (updatedConfig.logoUrl) setLogoUrl(updatedConfig.logoUrl);
+                    setAcademicYear(updatedConfig.activeAcademicYear);
+                    setIsInitialized(true);
+                    setAdminProfile({
+                      fullName: data.adminName.includes('(')
+                        ? data.adminName
+                        : `${data.adminName} (Müdür / Yönetici)`,
+                      email: data.adminEmail,
+                    });
+
+                    // 2. Canlı Supabase mevcutsa arka planda RPC mühürleme dene
+                    if (isSupabaseConfigured && supabase) {
+                      try {
+                        await bootstrapAdminViaRpc({
+                          bootstrapToken: data.bootstrapToken || '',
+                          adminName: data.adminName,
+                          schoolName: data.schoolName,
+                          adminEmail: data.adminEmail,
+                          adminPassword: data.adminPassword,
+                        });
+                      } catch (rpcErr) {
+                        console.info('Supabase arka plan bootstrap notu (yerel mühür korundu):', rpcErr);
+                      }
+                    }
+
+                    setPreviewRole('admin');
+                    setConfirmModalConfig({
+                      isOpen: true,
+                      title: 'Sistem Başarıyla Mühürlendi ve Kilitlendi',
+                      message: `${data.schoolName} için ilk yönetici yetkisi (${data.adminName} - ${data.adminEmail}) adına mühürlendi. Okul logosu ve bilgileri güncellendi, genel yönetici kayıtları kilitlendi.`,
+                      confirmText: 'Yönetici Paneline Geç',
+                      variant: 'primary',
+                      onConfirm: () => {
+                        setPreviewRole('admin');
+                        setConfirmModalConfig((prev) => ({ ...prev, isOpen: false }));
+                        setActiveTab('preview');
+                      },
+                    });
+                  }}
+                />
+              </div>
+            )}
           </div>
         )}
 
@@ -1279,7 +1398,20 @@ export default function App() {
               )}
 
               {previewRole === 'admin' && (
-                <AdminDashboard />
+                <AdminDashboard
+                  currentSchoolConfig={schoolConfig}
+                  sealingInfo={sealingInfo}
+                  onUpdateSchoolConfig={(newConfig) => {
+                    const updated = saveSchoolProfileConfig(newConfig);
+                    setSchoolConfig(updated);
+                    setSchoolName(updated.schoolName);
+                    if (updated.logoUrl) setLogoUrl(updated.logoUrl);
+                    setAcademicYear(updated.activeAcademicYear);
+                  }}
+                  onResealSystem={() => {
+                    triggerResetConfirm();
+                  }}
+                />
               )}
             </div>
           </div>

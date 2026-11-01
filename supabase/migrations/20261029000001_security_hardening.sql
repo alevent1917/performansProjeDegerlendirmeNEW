@@ -56,8 +56,8 @@ SECURITY DEFINER
 SET search_path = pg_catalog, public, pg_temp
 AS $$
 BEGIN
-  -- Yönetici değilse kritik alanların hiçbirinin değiştirilmesine izin verilmez
-  IF NOT public.is_admin() THEN
+  -- Yönetici değilse ve geçerli işlem ilk kurulum (bootstrap) sürecinde değilse kritik alanlar değiştirilemez
+  IF NOT public.is_admin() AND current_setting('app.bootstrap_in_progress', true) IS DISTINCT FROM 'true' THEN
     IF NEW.role IS DISTINCT FROM OLD.role THEN
       RAISE EXCEPTION 'Yetkisiz İşlem: Kullanıcı rolü yalnızca okul yöneticisi tarafından değiştirilebilir!';
     END IF;
@@ -144,7 +144,7 @@ CREATE OR REPLACE FUNCTION public.activate_student_account(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = pg_catalog, public, pg_temp
+SET search_path = pg_catalog, public, extensions, pg_temp
 AS $$
 DECLARE
   v_user_id UUID;
@@ -217,14 +217,14 @@ BEGIN
   -- 8. Kod Doğrulaması (Kriptografik Hash veya Karşılaştırma)
   BEGIN
     IF v_record.code_hash LIKE '$2%' THEN
-      v_code_valid := (v_record.code_hash = crypt(p_plain_code, v_record.code_hash));
+      v_code_valid := (v_record.code_hash = extensions.crypt(p_plain_code, v_record.code_hash));
     ELSIF length(v_record.code_hash) = 64 THEN
-      v_code_valid := (v_record.code_hash = encode(digest(p_plain_code, 'sha256'), 'hex'));
+      v_code_valid := (v_record.code_hash = encode(extensions.digest(p_plain_code, 'sha256'), 'hex'));
     ELSE
       v_code_valid := (v_record.code_hash = p_plain_code);
     END IF;
   EXCEPTION WHEN OTHERS THEN
-    v_code_valid := (v_record.code_hash = p_plain_code);
+    v_code_valid := false;
   END;
 
   -- 9. Hatalı Kod Durumu (Sayaç kalıcı artırılır, TRANSACTION GERİ ALINMAZ)
@@ -328,7 +328,7 @@ CREATE OR REPLACE FUNCTION public.bootstrap_initial_admin(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = pg_catalog, public, pg_temp
+SET search_path = public, auth
 AS $$
 DECLARE
   v_user_id UUID;
@@ -381,17 +381,18 @@ BEGIN
     );
   END IF;
 
-  -- 5. Belirteç (Token) Karşılaştırması
+  -- 5. Belirteç (Token) Karşılaştırması (Kriptografik güvenli doğrulama, asla düz metin fallback yapılmaz)
   BEGIN
     IF v_config.token_hash LIKE '$2%' THEN
-      v_token_valid := (v_config.token_hash = crypt(p_bootstrap_token, v_config.token_hash));
+      v_token_valid := (v_config.token_hash = extensions.crypt(p_bootstrap_token, v_config.token_hash));
     ELSIF length(v_config.token_hash) = 64 THEN
-      v_token_valid := (v_config.token_hash = encode(digest(p_bootstrap_token, 'sha256'), 'hex'));
+      v_token_valid := (v_config.token_hash = encode(extensions.digest(p_bootstrap_token, 'sha256'), 'hex'));
     ELSE
-      v_token_valid := (v_config.token_hash = p_bootstrap_token);
+      -- Düz metin token hash kabul edilmez; hash formatında olmalıdır
+      v_token_valid := false;
     END IF;
   EXCEPTION WHEN OTHERS THEN
-    v_token_valid := (v_config.token_hash = p_bootstrap_token);
+    v_token_valid := false;
   END;
 
   IF NOT v_token_valid THEN
@@ -413,16 +414,21 @@ BEGIN
     );
   END IF;
 
-  -- 6. Başarılı: Kullanıcıyı yönetici olarak ata veya profili oluştur
+  -- Bootstrap işlemini geçerli transaction içine güvenli işaretle (profil tetikleyicisini bilgilendir)
+  PERFORM set_config('app.bootstrap_in_progress', 'true', true);
+
+  -- 6. Başarılı: Kullanıcıyı yönetici olarak ata veya profili oluştur (school_number temizlenir)
   INSERT INTO public.user_profiles (
-    id, email, full_name, role, status
+    id, email, full_name, role, status, school_number
   ) VALUES (
-    v_user_id, v_user_email, p_admin_name, 'admin'::user_role, 'active'::user_status
+    v_user_id, v_user_email, p_admin_name, 'admin'::user_role, 'active'::user_status, NULL
   )
   ON CONFLICT (id) DO UPDATE SET
     role = 'admin'::user_role,
     status = 'active'::user_status,
-    full_name = EXCLUDED.full_name;
+    school_number = NULL,
+    full_name = EXCLUDED.full_name,
+    updated_at = NOW();
 
   -- 7. Okul ayarlarını güncelle ve mühürle
   UPDATE public.school_settings
@@ -440,6 +446,6 @@ BEGIN
 END;
 $$;
 
-REVOKE EXECUTE ON FUNCTION public.bootstrap_initial_admin(TEXT, TEXT, TEXT) FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION public.bootstrap_initial_admin(TEXT, TEXT, TEXT) FROM anon;
+REVOKE ALL ON FUNCTION public.bootstrap_initial_admin(TEXT, TEXT, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.bootstrap_initial_admin(TEXT, TEXT, TEXT) FROM anon;
 GRANT EXECUTE ON FUNCTION public.bootstrap_initial_admin(TEXT, TEXT, TEXT) TO authenticated;

@@ -46,6 +46,12 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
   onSwitchRolePreview,
 }) => {
+  const [imgError, setImgError] = React.useState(false);
+
+  React.useEffect(() => {
+    setImgError(false);
+  }, [logoUrl]);
+
   const getRoleIcon = (role: UserRole) => {
     switch (role) {
       case 'admin':
@@ -65,10 +71,11 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Sol: Okul Logosu ve Sistem Başlığı */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0 overflow-hidden text-indigo-600">
-              {logoUrl ? (
+              {logoUrl && !imgError ? (
                 <img
                   src={logoUrl}
                   alt={schoolName}
+                  onError={() => setImgError(true)}
                   className="w-full h-full object-contain"
                 />
               ) : (
